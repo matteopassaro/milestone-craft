@@ -508,7 +508,7 @@ function UpgradeModal({
 }
 
 export function MilestoneCraft() {
-  const { data: session, status: authStatus } = useSession() || {}
+  const { data: session, status: authStatus, update } = useSession() || {}
 
   const [current, setCurrent] = useState(265)
   const [target, setTarget] = useState(300)
@@ -704,14 +704,30 @@ export function MilestoneCraft() {
                 <img src={session.user.image} alt="User" className="h-7 w-7 rounded-full border border-border" />
               )}
               {!isPro ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1.5 border-amber-500/40 font-mono text-xs text-amber-700 hover:bg-amber-500/10 dark:text-amber-400"
-                  onClick={() => setIsUpgradeModalOpen(true)}
-                >
-                  <Crown size={13} className="text-amber-500" /> Unlock Pro
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-muted-foreground hover:bg-muted/50"
+                    title="Refresh Pro Status"
+                    onClick={async () => {
+                      setStatus('Refreshing status...')
+                      await update()
+                      setStatus('Status refreshed!')
+                      setTimeout(() => setStatus(''), 2000)
+                    }}
+                  >
+                    <RefreshCw size={14} />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 border-amber-500/40 font-mono text-xs text-amber-700 hover:bg-amber-500/10 dark:text-amber-400"
+                    onClick={() => setIsUpgradeModalOpen(true)}
+                  >
+                    <Crown size={13} className="text-amber-500" /> Unlock Pro
+                  </Button>
+                </div>
               ) : (
                 <span className="flex items-center gap-1 font-mono text-xs text-muted-foreground">
                   <UserCheck size={14} className="text-emerald-500" /> Pro Member

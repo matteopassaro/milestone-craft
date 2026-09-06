@@ -64,9 +64,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.isPro = dbUser?.isPro ?? false
       }
       
-      // Allow updating the token (e.g., when the user upgrades to Pro)
-      if (trigger === "update" && session?.isPro !== undefined) {
-        token.isPro = session.isPro
+      // Allow updating the token by checking the DB (e.g., after webhook updates)
+      if (trigger === "update") {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { isPro: true },
+        })
+        token.isPro = dbUser?.isPro ?? false
       }
       return token
     },
