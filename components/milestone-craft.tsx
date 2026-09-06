@@ -342,68 +342,73 @@ function PreviewCard({
       <div className="pointer-events-none absolute inset-0 mix-blend-overlay bg-gradient-to-br from-white/30 to-transparent" aria-hidden="true" />
       
       <div
-        className="relative z-10 w-full max-w-sm rounded-3xl border border-white/20 p-8 shadow-2xl transition-all duration-500"
+        className="relative z-10 flex w-full max-w-[420px] flex-col items-center rounded-[2.5rem] border border-white/20 p-8 text-center shadow-[0_0_80px_-20px_rgba(0,0,0,0.3)] transition-all duration-500 sm:p-10"
         style={{
           background: t.cardBg,
           borderColor: t.cardBorder,
-          backdropFilter: t.category === 'Glass' ? 'blur(16px)' : undefined,
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+          backdropFilter: t.category === 'Glass' ? 'blur(24px)' : 'blur(12px)',
+          boxShadow: '0 30px 60px -15px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.1)',
         }}
       >
-        <div className="mb-6 flex w-fit items-center gap-2.5 rounded-full border border-white/10 bg-black/5 py-1.5 pl-1.5 pr-4 shadow-sm backdrop-blur-md">
+        <div className="pointer-events-none absolute inset-0 rounded-[2.5rem] opacity-[0.03] mix-blend-overlay" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '16px 16px' }} aria-hidden="true" />
+        
+        <div className="relative mb-8 flex items-center justify-center gap-3 rounded-full border border-white/10 bg-black/5 p-2 pr-6 shadow-inner backdrop-blur-md">
           {avatarUrl && (
-            <img src={avatarUrl} alt="Avatar" className="h-7 w-7 rounded-full border border-white/20 object-cover shadow-sm" />
+            <img src={avatarUrl} alt="Avatar" className="h-8 w-8 rounded-full border border-white/30 object-cover shadow-md" />
           )}
           {handle && (
-            <span className="font-mono text-sm font-semibold tracking-tight" style={{ color: t.subTextColor || '#334155' }}>
+            <span className="font-mono text-sm font-semibold tracking-wider uppercase" style={{ color: t.subTextColor || '#334155' }}>
               {handle.startsWith('@') ? handle : `@${handle}`}
             </span>
           )}
         </div>
 
-        <div className="text-6xl font-black leading-none tracking-tighter tabular-nums drop-shadow-sm sm:text-7xl" style={{ color: t.accent }}>
+        <div className="relative text-7xl font-black leading-none tracking-tighter tabular-nums drop-shadow-md sm:text-[5.5rem]" style={{ color: t.accent, textShadow: `0 4px 20px ${t.accent}40` }}>
           {current.toLocaleString()}
         </div>
-        <div className="mt-1 text-2xl font-bold tracking-tight opacity-95" style={{ color: t.textColor || '#0f172a' }}>
+        <div className="mt-3 text-3xl font-extrabold tracking-tight opacity-95" style={{ color: t.textColor || '#0f172a' }}>
           {metric || 'followers'}
         </div>
-        <div className="mt-2 text-lg font-medium opacity-80" style={{ color: t.subTextColor || '#64748b' }}>
-          {message || 'Thank you!'} <span aria-hidden="true" className="inline-block cursor-default transition-transform hover:scale-110">♥</span>
+        <div className="mt-3 text-xl font-medium italic opacity-80" style={{ color: t.subTextColor || '#64748b' }}>
+          "{message || 'Thank you!'}" <span aria-hidden="true" className="not-italic">🚀</span>
         </div>
 
-        <div className="relative mt-8 h-3 w-full overflow-hidden rounded-full bg-black/10 shadow-inner">
+        <div className="relative mt-10 h-4 w-full overflow-hidden rounded-full bg-black/10 shadow-inner">
           <div
             className="absolute left-0 top-0 h-full rounded-full transition-all duration-1000 ease-out"
             style={{
               width: `${percent}%`,
               background: `linear-gradient(90deg, ${t.accent}, ${t.colors[1] || t.accent})`,
+              boxShadow: `0 0 10px ${t.accent}80`
             }}
           />
           {percent > 0 && percent < 100 && (
             <div
-              className="absolute -ml-3.5 -mt-3.5 top-1/2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-md transition-all duration-1000"
+              className="absolute -ml-4 -mt-4 top-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-xl transition-all duration-1000"
               style={{ left: `${percent}%` }}
             >
-              <Star size={14} fill="#f5b51b" color="#e3a412" />
+              <Star size={16} fill="#f5b51b" color="#e3a412" />
             </div>
           )}
           {percent === 100 && (
-            <div className="absolute -mr-0 -mt-2.5 right-0 top-1/2 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-md transition-all duration-1000">
-              <CheckCircle2 size={12} className="text-emerald-500" />
+            <div className="absolute -mr-0 -mt-3 right-0 top-1/2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-xl transition-all duration-1000">
+              <CheckCircle2 size={14} className="text-emerald-500" />
             </div>
           )}
         </div>
 
-        <div className="mt-3 flex justify-between font-mono text-sm font-bold opacity-80" style={{ color: t.textColor || '#334155' }}>
+        <div className="mt-4 flex w-full justify-between font-mono text-sm font-bold opacity-70" style={{ color: t.textColor || '#334155' }}>
           <span>{current.toLocaleString()}</span>
           <span>{target.toLocaleString()}</span>
         </div>
 
-        <div className="mt-6 text-3xl font-black tracking-tight" style={{ color: t.accent }}>
-          {remaining.toLocaleString()} to go
-        </div>
-        <div className="mt-1 text-base font-medium opacity-90" style={{ color: t.textColor || '#0f172a' }}>
-          On the way to <strong style={{ color: t.accent }}>{target.toLocaleString()}</strong>! <span aria-hidden="true">↗</span>
+        <div className="mt-8 flex flex-col items-center gap-1 rounded-2xl bg-black/5 px-8 py-4 backdrop-blur-sm border border-white/5 shadow-sm">
+          <div className="text-3xl font-black tracking-tight" style={{ color: t.accent }}>
+            {remaining.toLocaleString()} left
+          </div>
+          <div className="text-xs font-bold opacity-80 uppercase tracking-[0.2em]" style={{ color: t.textColor || '#0f172a' }}>
+            Road to {target.toLocaleString()}
+          </div>
         </div>
       </div>
 
@@ -411,10 +416,10 @@ function PreviewCard({
       
       {watermark && (
         <div 
-          className="absolute bottom-4 right-6 z-20 font-mono text-[10px] font-bold tracking-widest uppercase"
-          style={{ color: t.textColor || '#000000', opacity: 0.4 }}
+          className="absolute bottom-4 right-4 z-20 flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1.5 font-mono text-[10px] font-bold tracking-widest uppercase text-white shadow-sm backdrop-blur-md"
         >
-          Made with MilestoneCraft
+          <Sparkles size={12} className="text-amber-400" />
+          <span>Made with MilestoneCraft</span>
         </div>
       )}
     </div>
@@ -652,13 +657,10 @@ export function MilestoneCraft() {
   }
 
   const shareOnX = () => {
-    window.open(
-      `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-        `${current.toLocaleString()} ${metric}. ${remaining.toLocaleString()} to go — on the way to ${target.toLocaleString()}! Built with MilestoneCraft.`
-      )}`,
-      '_blank',
-      'noopener,noreferrer'
-    )
+    const text = encodeURIComponent(
+      `Just reached ${current.toLocaleString()} ${metric} on ${platform}! 🚀\n\n${remaining > 0 ? `${remaining.toLocaleString()} to go until ${target.toLocaleString()} 📈\n\n` : ''}Generated with @MilestoneCraft_`
+    );
+    window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank", "noopener,noreferrer");
     setStatus('Share window opened')
   }
 
@@ -954,9 +956,14 @@ export function MilestoneCraft() {
 
             {/* Export Actions */}
             <div className="mt-6 space-y-2">
-              <Button className="h-11 w-full gap-2 rounded-xl font-medium" onClick={downloadPNG}>
-                <Download size={16} /> Download PNG
-              </Button>
+              <button 
+                className="group relative inline-flex h-12 w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 p-[1px] font-bold text-white transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:shadow-[0_0_30px_rgba(99,102,241,0.6)]" 
+                onClick={downloadPNG}
+              >
+                <span className="relative flex h-full w-full items-center justify-center gap-2 rounded-[11px] bg-black/10 px-6 transition-all duration-300 group-hover:bg-transparent">
+                  <Download size={16} /> Download PNG ✨
+                </span>
+              </button>
               <Button variant="outline" className="h-10 w-full gap-2 rounded-xl font-mono text-xs" onClick={downloadSVG}>
                 <FileCode size={14} /> Export Vector SVG {!isPro && <Crown size={12} className="text-amber-500" />}
               </Button>

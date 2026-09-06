@@ -43,9 +43,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         })
 
         // If user doesn't exist or doesn't have a password (signed up via OAuth)
-        if (!user || !user.password) return null
+        if (!user || !(user as any).password) return null
 
-        const isValid = await bcrypt.compare(credentials.password as string, user.password)
+        const isValid = await bcrypt.compare(credentials.password as string, (user as any).password)
         if (!isValid) return null
 
         return user
@@ -53,18 +53,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) token.id = user.id
+    async jwt({ token, user, trigger, session }) {
+      if (user) {
+        token.id = user.id
+        // Fetch isPro from DB only once during sign-in
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { isPro: true },
+        })
+        token.isPro = dbUser?.isPro ?? false
+      }
+      
+      // Allow updating the token (e.g., when the user upgrades to Pro)
+      if (trigger === "update" && session?.isPro !== undefined) {
+        token.isPro = session.isPro
+      }
       return token
     },
     async session({ session, token }) {
       if (token?.id) {
         session.user.id = token.id as string
-        const dbUser = await prisma.user.findUnique({
-          where: { id: session.user.id },
-          select: { isPro: true },
-        })
-        session.user.isPro = dbUser?.isPro ?? false
+        session.user.isPro = token.isPro as boolean
       }
       return session
     },
