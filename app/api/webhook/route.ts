@@ -13,14 +13,21 @@ export async function POST(request: NextRequest) {
     const rawBody = await request.text();
     const signature = request.headers.get("x-signature") ?? "";
 
+    if (!signature) {
+      console.error("Webhook Error: No signature header");
+      return NextResponse.json({ message: "No signature" }, { status: 401 });
+    }
+
     const hmac = crypto
       .createHmac("sha256", secret)
       .update(rawBody)
       .digest("hex");
 
-    const isValidSignature = crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(signature));
-    if (!isValidSignature) {
-      console.error("Webhook Error: Invalid signature");
+    const hmacBuffer = Buffer.from(hmac);
+    const signatureBuffer = Buffer.from(signature);
+
+    if (hmacBuffer.length !== signatureBuffer.length || !crypto.timingSafeEqual(hmacBuffer, signatureBuffer)) {
+      console.error("Webhook Error: Invalid signature. Expected:", hmac, "Got:", signature);
       return NextResponse.json({ message: "Invalid signature" }, { status: 401 });
     }
 
