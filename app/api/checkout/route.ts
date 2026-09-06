@@ -1,7 +1,8 @@
+// app/api/checkout/route.ts
 import { auth } from "@/auth"
 import { NextResponse } from "next/server"
 
-export async function POST() {
+export async function POST(req: Request) {
   const session = await auth()
   
   if (!session?.user?.id) {
@@ -9,6 +10,16 @@ export async function POST() {
   }
 
   try {
+    const { billing } = await req.json() // "monthly" or "lifetime"
+
+    const variantId = billing === "monthly" 
+      ? process.env.LEMONSQUEEZY_VARIANT_ID_MONTHLY 
+      : process.env.LEMONSQUEEZY_VARIANT_ID_LIFETIME
+
+    if (!variantId) {
+      return NextResponse.json({ error: "Pricing plan configuration missing" }, { status: 500 })
+    }
+
     const res = await fetch("https://api.lemonsqueezy.com/v1/checkouts", {
       method: "POST",
       headers: {
@@ -36,7 +47,7 @@ export async function POST() {
             variant: {
               data: {
                 type: "variants",
-                id: process.env.LEMONSQUEEZY_VARIANT_ID,
+                id: variantId,
               },
             },
           },

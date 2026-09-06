@@ -1,7 +1,11 @@
+// auth.ts
 import NextAuth, { type DefaultSession } from "next-auth"
-import GitHub from "next-auth/providers/github"
+import Credentials from "next-auth/providers/credentials"
+import Google from "next-auth/providers/google"
+import Apple from "next-auth/providers/apple"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
+import bcrypt from "bcryptjs"
 
 declare module "next-auth" {
   interface Session {
@@ -13,20 +17,51 @@ declare module "next-auth" {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || process.env.BETTER_AUTH_SECRET,
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   adapter: PrismaAdapter(prisma),
+  session: { strategy: "jwt" }, // JWT is required when using Credentials provider
   providers: [
-    GitHub({
-      clientId: process.env.GITHUB_ID!,
-      clientSecret: process.env.GITHUB_SECRET!,
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
+    Apple({
+      clientId: process.env.APPLE_ID!,
+      clientSecret: process.env.APPLE_SECRET!,
+    }),
+    Credentials({
+      name: "Email and Password",
+      credentials: {
+        email: { label: "Email", type: "email", placeholder: "you@example.com" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) return null
+
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email as string }
+        })
+
+        // If user doesn't exist or doesn't have a password (signed up via OAuth)
+        if (!user || !user.password) return null
+
+        const isValid = await bcrypt.compare(credentials.password as string, user.password)
+        if (!isValid) return null
+
+        return user
+      }
+    })
   ],
   callbacks: {
-    async session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id
+    async jwt({ token, user }) {
+      if (user) token.id = user.id
+      return token
+    },
+    async session({ session, token }) {
+      if (token?.id) {
+        session.user.id = token.id as string
         const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
+          where: { id: session.user.id },
           select: { isPro: true },
         })
         session.user.isPro = dbUser?.isPro ?? false
