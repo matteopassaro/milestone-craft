@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
           attributes: {
             checkout_data: {
               email: userEmail || undefined,
-              custom_data: {
+              custom: {
                 user_id: userId,
               },
             },
