@@ -434,7 +434,7 @@ function UpgradeModal({
 }: {
   isOpen: boolean
   onClose: () => void
-  onUnlockPro: () => void
+  onUnlockPro: (variantId: string) => void
   isCheckingOut: boolean
 }) {
   if (!isOpen) return null
@@ -455,7 +455,11 @@ function UpgradeModal({
         </p>
 
         <div className="mt-6 space-y-3">
-          <div className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 p-4">
+          <button 
+            disabled={isCheckingOut}
+            onClick={() => onUnlockPro("2096309")}
+            className="w-full flex items-center justify-between rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 text-left transition-all hover:bg-amber-500/20 hover:border-amber-500 disabled:opacity-50"
+          >
             <div>
               <div className="text-sm font-semibold">Lifetime Access</div>
               <div className="text-xs text-muted-foreground">Pay once, own forever</div>
@@ -464,9 +468,13 @@ function UpgradeModal({
               <span className="text-2xl font-extrabold">$19</span>
               <span className="text-xs text-muted-foreground"> /one-time</span>
             </div>
-          </div>
+          </button>
 
-          <div className="flex items-center justify-between rounded-xl border border-border p-4">
+          <button 
+            disabled={isCheckingOut}
+            onClick={() => onUnlockPro("2087598")}
+            className="w-full flex items-center justify-between rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary/50 hover:bg-accent disabled:opacity-50"
+          >
             <div>
               <div className="text-sm font-semibold">Monthly Pro</div>
               <div className="text-xs text-muted-foreground">Cancel anytime</div>
@@ -475,7 +483,7 @@ function UpgradeModal({
               <span className="text-2xl font-extrabold">$5</span>
               <span className="text-xs text-muted-foreground"> /month</span>
             </div>
-          </div>
+          </button>
         </div>
 
         <ul className="mt-6 space-y-2 text-xs text-muted-foreground">
@@ -485,17 +493,11 @@ function UpgradeModal({
         </ul>
 
         <div className="mt-6 flex flex-col gap-2">
-          <Button
-            disabled={isCheckingOut}
-            className="h-11 w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 font-semibold text-white shadow-md"
-            onClick={onUnlockPro}
-          >
-            {isCheckingOut ? (
-              <span className="flex items-center gap-2"><RefreshCw size={14} className="animate-spin" /> Preparing Checkout...</span>
-            ) : (
-              'Unlock Pro Access Now'
-            )}
-          </Button>
+          {isCheckingOut && (
+            <div className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-muted text-sm font-semibold text-muted-foreground">
+              <RefreshCw size={14} className="animate-spin" /> Preparing Checkout...
+            </div>
+          )}
           <Button variant="ghost" className="w-full" onClick={onClose}>
             Maybe Later
           </Button>
@@ -534,8 +536,8 @@ export function MilestoneCraft() {
   const remaining = useMemo(() => Math.max(target - current, 0), [current, target])
 
   // Handle Lemon Squeezy Checkout
-  const handleCheckout = async () => {
-    if (!session) {
+  const handleCheckout = async (variantId: string) => {
+    if (!session?.user?.id) {
       signIn('google')
       return
     }
@@ -547,13 +549,18 @@ export function MilestoneCraft() {
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          variantId,
+          userId: session.user.id,
+          userEmail: session.user.email,
+        }),
       })
       const data = await res.json()
 
-      if (data.url) {
-        window.location.href = data.url
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl
       } else {
-        setStatus(data.error || 'Checkout initiation failed.')
+        setStatus(data.message || 'Checkout initiation failed.')
         setTimeout(() => setStatus(''), 3000)
       }
     } catch (err) {

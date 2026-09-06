@@ -1,39 +1,35 @@
-// app/api/checkout/route.ts
-import { auth } from "@/auth"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: Request) {
-  const session = await auth()
-  
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized. Please sign in." }, { status: 401 })
-  }
-
+export async function POST(req: NextRequest) {
   try {
-    const { billing } = await req.json() // "monthly" or "lifetime"
+    const { variantId, userId, userEmail } = await req.json();
 
-    const variantId = billing === "monthly" 
-      ? process.env.LEMONSQUEEZY_VARIANT_ID_MONTHLY 
-      : process.env.LEMONSQUEEZY_VARIANT_ID_LIFETIME
-
-    if (!variantId) {
-      return NextResponse.json({ error: "Pricing plan configuration missing" }, { status: 500 })
+    if (!variantId || !userId) {
+      return NextResponse.json({ message: "Missing variantId or userId" }, { status: 400 });
     }
 
-    const res = await fetch("https://api.lemonsqueezy.com/v1/checkouts", {
+    const apiKey = process.env.LEMONSQUEEZY_API_KEY;
+    const storeId = process.env.LEMONSQUEEZY_STORE_ID;
+
+    if (!apiKey || !storeId) {
+      return NextResponse.json({ message: "Lemon Squeezy credentials not configured" }, { status: 500 });
+    }
+
+    const response = await fetch("https://api.lemonsqueezy.com/v1/checkouts", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.LEMONSQUEEZY_API_KEY}`,
-        "Content-Type": "application/vnd.api+json",
         Accept: "application/vnd.api+json",
+        "Content-Type": "application/vnd.api+json",
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         data: {
           type: "checkouts",
           attributes: {
             checkout_data: {
+              email: userEmail || undefined,
               custom: {
-                user_id: session.user.id,
+                user_id: userId,
               },
             },
           },
@@ -41,29 +37,32 @@ export async function POST(req: Request) {
             store: {
               data: {
                 type: "stores",
-                id: process.env.LEMONSQUEEZY_STORE_ID,
+                id: storeId.toString(),
               },
             },
             variant: {
               data: {
                 type: "variants",
-                id: variantId,
+                id: variantId.toString(),
               },
             },
           },
         },
       }),
-    })
+    });
 
-    const data = await res.json()
-    const checkoutUrl = data.data?.attributes?.url
+    const data = await response.json();
 
-    if (!checkoutUrl) {
-      return NextResponse.json({ error: "Failed to create checkout URL" }, { status: 500 })
+    if (!response.ok) {
+      console.error("Lemon Squeezy API error:", data);
+      return NextResponse.json({ message: "Failed to create checkout session" }, { status: 500 });
     }
 
-    return NextResponse.json({ url: checkoutUrl })
+    const checkoutUrl = data.data.attributes.url;
+
+    return NextResponse.json({ checkoutUrl });
   } catch (error) {
-    return NextResponse.json({ error: "Checkout session failed" }, { status: 500 })
+    console.error("Error creating checkout:", error);
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
 }
